@@ -1,6 +1,6 @@
 // service.js — capa entre el frontend y el backend (Google Apps Script)
 // PASO REQUERIDO: pega aquí la URL de tu Web App de Apps Script tras el deploy.
-export const API_URL = "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT";
+export const API_URL = "https://script.google.com/macros/s/AKfycbyIqsAVp-hKxjqO4yDXVzSHmCl9Tbt7j0X_Hms318xxbtOW-uvCzV6j7w3X9K5wRCwe/exec";
 
 import { slugify } from "./utils.js";
 
