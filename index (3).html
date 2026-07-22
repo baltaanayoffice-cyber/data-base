@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Episodios</title>
+<meta name="description" content="Plataforma de episodios: video, audio e imágenes. Contenido gratis y premium." />
+<link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="brand" data-link>Episodios</a>
+    <nav class="tabs">
+      <a href="/" data-link>Inicio</a>
+      <a href="/list" data-link>Mi lista</a>
+      <a href="/likes" data-link>Me gusta</a>
+      <a href="/history" data-link>Historial</a>
+    </nav>
+    <div class="user-menu" id="user-menu"></div>
+  </header>
+
+  <main id="app" class="app-main">
+    <div class="loading">Cargando…</div>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="year"></span> Episodios · Hecho con Google Sheets + Vercel</p>
+  </footer>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
