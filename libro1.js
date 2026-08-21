@@ -13,9 +13,9 @@ export default {
 
     // Páginas: cada una puede tener imagen (ruta) o texto/color generado
     pages: [
-        { color: '#1e2a3a', text: 'Hola' },
-        { color: '#2a3a4a', text: '2' },
-        { color: '#3a4a5a', text: '3' },
+        { image: 'https://archive.org/download/corderono-os-dejare/1.png' },
+        { image: 'https://archive.org/download/corderono-os-dejare/2.png' },
+        { image: 'https://archive.org/download/corderono-os-dejare/3.png' },
         { color: '#4a5a6a', text: '4' },
         { color: '#5a6a7a', text: '5' },
         { color: '#6a4a3a', text: '6' },
