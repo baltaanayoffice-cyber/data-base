@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Libro Digital</title>
+    <style>
+        /* Reset y base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            background: #0b0e14;
+            color: #e8edf2;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-height: 100vh;
+            background: #12181f;
+        }
+        #main-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        #book-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #12181f;
+            overflow: hidden;
+            position: relative;
+            transition: background 0.3s;
+        }
+        #book-view {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s ease;
+            transform-origin: center center;
+            will-change: transform;
+            overflow: hidden;
+        }
+        /* Modos de visualización */
+        .view-two {
+            flex-direction: row;
+            gap: 4px;
+            padding: 10px;
+        }
+        .view-two .page-container {
+            flex: 1;
+            max-width: 50%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1e262f;
+            border-radius: 6px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s;
+        }
+        .view-two .page-container img,
+        .view-two .page-container .page-content {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .view-one {
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px 10px;
+            align-items: center;
+            gap: 8px;
+        }
+        .view-one .page-container {
+            width: 100%;
+            max-width: 700px;
+            background: #1e262f;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .view-one .page-container img,
+        .view-one .page-container .page-content {
+            width: 100%;
+            display: block;
+        }
+        .view-thumbnails {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            align-content: start;
+        }
+        .view-thumbnails .page-container {
+            background: #1e262f;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+            aspect-ratio: 0.7;
+        }
+        .view-thumbnails .page-container:hover {
+            transform: scale(1.02);
+        }
+        .view-thumbnails .page-container img,
+        .view-thumbnails .page-container .page-content {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .page-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.7);
+            background: #2a3340;
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+        }
+
+        /* Panel de audio */
+        #audio-panel {
+            width: 0;
+            flex: 0 0 0;
+            background: #1a2330;
+            overflow: hidden;
+            transition: flex 0.4s ease, width 0.4s ease, padding 0.4s ease;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            color: #cfd7e3;
+            border-left: 1px solid #2a3647;
+            position: relative;
+        }
+        #audio-panel.active {
+            flex: 0 0 340px;
+            width: 340px;
+            padding: 20px 16px;
+        }
+        #audio-panel .audio-header {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #b0c0d4;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #audio-panel .audio-header .close-audio {
+            background: none;
+            border: none;
+            color: #8a9bb0;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0 6px;
+        }
+        #audio-panel .audio-header .close-audio:hover {
+            color: #d0dbe8;
+        }
+        .audio-progress {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .audio-progress input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            background: #2e3b4b;
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+            transition: background 0.2s;
+        }
+        .audio-progress input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #6c8fc7;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(108, 143, 199, 0.3);
+        }
+        .audio-progress input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #6c8fc7;
+            cursor: pointer;
+            border: none;
+        }
+        .audio-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #889bb0;
+        }
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .audio-controls button {
+            background: none;
+            border: none;
+            color: #c8d4e0;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+        }
+        .audio-controls button:hover {
+            background: #2a3647;
+            color: #ffffff;
+        }
+        .audio-controls button.play-pause {
+            font-size: 1.8rem;
+            width: 48px;
+            height: 48px;
+            background: #2e3b4b;
+            border-radius: 50%;
+        }
+        .audio-controls button.play-pause:hover {
+            background: #3f4e62;
+        }
+        .audio-extra {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 16px;
+            align-items: center;
+            margin-top: 4px;
+            font-size: 0.85rem;
+            color: #a0b2c6;
+        }
+        .audio-extra label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .audio-extra select,
+        .audio-extra input[type="number"] {
+            background: #1e2937;
+            color: #d0dbe8;
+            border: 1px solid #2e3b4b;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+        .audio-extra input[type="range"] {
+            width: 80px;
+            -webkit-appearance: none;
+            background: #2e3b4b;
+            height: 3px;
+            border-radius: 2px;
+        }
+        .audio-extra input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #6c8fc7;
+            cursor: pointer;
+        }
+        .audio-extra .timer-set {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .audio-extra .timer-set input {
+            width: 48px;
+        }
+        .audio-extra .timer-set button {
+            background: #2e3b4b;
+            border: none;
+            color: #c8d4e0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background 0.2s;
+        }
+        .audio-extra .timer-set button:hover {
+            background: #3f4e62;
+        }
+        .audio-extra .timer-set .timer-label {
+            font-size: 0.75rem;
+            color: #889bb0;
+            margin-left: 4px;
+        }
+
+        /* Controles inferiores */
+        #controls {
+            background: #0f151c;
+            border-top: 1px solid #1f2a36;
+            padding: 8px 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 6px 12px;
+            flex-shrink: 0;
+            min-height: 56px;
+        }
+        #controls .group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        #controls button {
+            background: none;
+            border: none;
+            color: #9aadc2;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+        }
+        #controls button:hover {
+            background: #1f2a36;
+            color: #e0e8f0;
+        }
+        #controls button.active-mode {
+            background: #2a3647;
+            color: #c8daf0;
+            box-shadow: inset 0 0 0 1px #4b5f78;
+        }
+        #controls .separator {
+            width: 1px;
+            height: 28px;
+            background: #1f2a36;
+            margin: 0 4px;
+        }
+        #controls .page-indicator {
+            font-size: 0.85rem;
+            color: #7a8fa5;
+            padding: 0 8px;
+            min-width: 70px;
+            text-align: center;
+        }
+        #controls .zoom-group button {
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+        #controls .audio-toggle {
+            color: #5a7ca0;
+        }
+        #controls .audio-toggle.active {
+            color: #8bb5e0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #audio-panel.active {
+                flex: 0 0 100%;
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #2a3647;
+                max-height: 50vh;
+                padding: 12px;
+            }
+            #main-area {
+                flex-direction: column;
+            }
+            .view-two .page-container {
+                max-width: 90%;
+                height: 80%;
+            }
+            .view-two {
+                gap: 2px;
+                padding: 4px;
+            }
+            #controls {
+                padding: 6px 8px;
+                gap: 4px 8px;
+            }
+            #controls button {
+                padding: 4px 6px;
+                font-size: 0.9rem;
+                min-width: 30px;
+                height: 30px;
+            }
+            .view-thumbnails {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 6px;
+                padding: 10px;
+            }
+            .audio-controls button {
+                font-size: 1rem;
+                padding: 4px 6px;
+                min-width: 28px;
+            }
+            .audio-controls button.play-pause {
+                width: 40px;
+                height: 40px;
+                font-size: 1.4rem;
+            }
+            #audio-panel .audio-header {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+        }
+        @media (orientation: portrait) and (max-width: 768px) {
+            .view-two .page-container {
+                max-width: 95%;
+                height: 70%;
+            }
+        }
+        @media (orientation: landscape) and (max-width: 900px) {
+            #audio-panel.active {
+                flex: 0 0 280px;
+                width: 280px;
+            }
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #12181f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3647;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f4e62;
+        }
+
+        /* Fullscreen */
+        #app.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            background: #0b0e14;
+        }
+
+        /* Transición de páginas en modo dos */
+        .page-slide-out {
+            transform: translateX(-30px) scale(0.96);
+            opacity: 0.6;
+        }
+        .page-slide-in {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+        }
+
+        /* Ocultar scroll en vista two */
+        .view-two {
+            overflow: hidden;
+        }
+        .view-one {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="main-area">
+            <div id="book-area">
+                <div id="book-view" class="view-two"></div>
+            </div>
+            <div id="audio-panel">
+                <div class="audio-header">
+                    <span>🎧 Audiolibro</span>
+                    <button class="close-audio" id="closeAudioBtn" title="Cerrar reproductor">✕</button>
+                </div>
+                <div class="audio-progress">
+                    <input type="range" id="audioProgress" min="0" max="100" value="0" step="0.1">
+                    <div class="audio-time">
+                        <span id="audioCurrent">0:00</span>
+                        <span id="audioDuration">5:00</span>
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button id="rewindBtn" title="Retroceder 10s">⏪</button>
+                    <button id="playPauseBtn" class="play-pause" title="Reproducir/Pausar">▶</button>
+                    <button id="forwardBtn" title="Adelantar 10s">⏩</button>
+                </div>
+                <div class="audio-extra">
+                    <label>Velocidad
+                        <select id="speedSelect">
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                        </select>
+                    </label>
+                    <label>Volumen
+                        <input type="range" id="volumeRange" min="0" max="100" value="80">
+                    </label>
+                    <div class="timer-set">
+                        <input type="number" id="timerMinutes" value="15" min="1" max="120" step="1">
+                        <button id="setTimerBtn">⏲</button>
+                        <span class="timer-label" id="timerStatus">Apagado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="controls">
+            <div class="group">
+                <button id="prevBtn" title="Página anterior">◀</button>
+                <span class="page-indicator" id="pageIndicator">1 / 20</span>
+                <button id="nextBtn" title="Página siguiente">▶</button>
+            </div>
+            <div class="separator"></div>
+            <div class="group">
+                <button id="modeTwoBtn" class="active-mode" title="Dos páginas (vista libro)">📖</button>
+                <button id="modeOneBtn" title="Una página (scroll)">📄</button>
+                <button id="modeThumbBtn" title="Miniaturas">⊞</button>
+            </div>
+            <div class="separator"></div>
+            <div class="group zoom-group">
+                <button id="zoomOutBtn" title="Alejar">−</button>
+                <button id="zoomInBtn" title="Acercar">+</button>
+            </div>
+            <div class="separator"></div>
+            <div class="group">
+                <button id="fullscreenBtn" title="Pantalla completa">⛶</button>
+                <button id="audioToggleBtn" title="Activar audiolibro">🎧</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ============================================================
+        //  DATOS DEL LIBRO DE EJEMPLO
+        // ============================================================
+        const TOTAL_PAGES = 20;
+        const PAGE_DURATION = 15; // segundos por página (audio)
+        const AUDIO_DURATION = TOTAL_PAGES * PAGE_DURATION; // 300s = 5min
+
+        // Generar páginas con colores y números
+        const pages = [];
+        const palette = [
+            '#1e2a3a', '#2a3a4a', '#3a4a5a', '#4a5a6a', '#5a6a7a',
+            '#6a4a3a', '#7a5a4a', '#8a6a5a', '#9a7a6a', '#aa8a7a',
+            '#3a5a3a', '#4a6a4a', '#5a7a5a', '#6a8a6a', '#7a9a7a',
+            '#5a3a5a', '#6a4a6a', '#7a5a7a', '#8a6a8a', '#9a7a9a'
+        ];
+        for (let i = 0; i < TOTAL_PAGES; i++) {
+            const color = palette[i % palette.length];
+            const num = i + 1;
+            // Crear contenido como div con número (para simular página)
+            const content = document.createElement('div');
+            content.className = 'page-content';
+            content.style.background = color;
+            content.textContent = num;
+            pages.push({
+                element: content,
+                color: color,
+                timeStart: i * PAGE_DURATION,
+                timeEnd: (i + 1) * PAGE_DURATION
+            });
+        }
+
+        // ============================================================
+        //  ESTADO DE LA APLICACIÓN
+        // ============================================================
+        const state = {
+            currentPage: 0, // índice 0-based
+            mode: 'two', // 'two', 'one', 'thumbnails'
+            zoom: 1,
+            isFullscreen: false,
+            isAudioActive: false,
+            isPlaying: false,
+            audioTime: 0, // segundos actuales
+            audioSpeed: 1,
+            volume: 0.8,
+            timerMinutes: 15,
+            timerId: null,
+            audioContext: null,
+            oscillator: null,
+            gainNode: null,
+            animationFrame: null,
+            lastTimestamp: 0,
+            previousMode: 'two',
+        };
+
+        // ============================================================
+        //  DOM REFERENCIAS
+        // ============================================================
+        const bookView = document.getElementById('book-view');
+        const bookArea = document.getElementById('book-area');
+        const audioPanel = document.getElementById('audio-panel');
+        const controls = document.getElementById('controls');
+        const app = document.getElementById('app');
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageIndicator = document.getElementById('pageIndicator');
+        const modeTwoBtn = document.getElementById('modeTwoBtn');
+        const modeOneBtn = document.getElementById('modeOneBtn');
+        const modeThumbBtn = document.getElementById('modeThumbBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const audioToggleBtn = document.getElementById('audioToggleBtn');
+        const closeAudioBtn = document.getElementById('closeAudioBtn');
+
+        // Audio controles
+        const audioProgress = document.getElementById('audioProgress');
+        const audioCurrent = document.getElementById('audioCurrent');
+        const audioDuration = document.getElementById('audioDuration');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const rewindBtn = document.getElementById('rewindBtn');
+        const forwardBtn = document.getElementById('forwardBtn');
+        const speedSelect = document.getElementById('speedSelect');
+        const volumeRange = document.getElementById('volumeRange');
+        const timerMinutes = document.getElementById('timerMinutes');
+        const setTimerBtn = document.getElementById('setTimerBtn');
+        const timerStatus = document.getElementById('timerStatus');
+
+        // ============================================================
+        //  FUNCIONES DE RENDERIZADO
+        // ============================================================
+        function render() {
+            const mode = state.mode;
+            const current = state.currentPage;
+            const zoom = state.zoom;
+
+            // Limpiar vista
+            bookView.innerHTML = '';
+            bookView.className = '';
+
+            if (mode === 'two') {
+                bookView.classList.add('view-two');
+                const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth < 768;
+                const pagesToShow = isPortrait ? 1 : 2;
+                let start = current;
+                if (!isPortrait && current % 2 !== 0) start = current - 1; // mostrar página par a la izquierda
+                if (start < 0) start = 0;
+                const end = Math.min(start + pagesToShow, TOTAL_PAGES);
+                for (let i = start; i < end; i++) {
+                    const container = document.createElement('div');
+                    container.className = 'page-container';
+                    const clone = pages[i].element.cloneNode(true);
+                    container.appendChild(clone);
+                    container.style.transform = `scale(${zoom})`;
+                    bookView.appendChild(container);
+                }
+                // Si solo una página, centrar
+                if (pagesToShow === 1) {
+                    bookView.style.justifyContent = 'center';
+                } else {
+                    bookView.style.justifyContent = 'space-between';
+                }
+                // Actualizar índice para navegación
+                state._twoStart = start;
+                state._twoCount = pagesToShow;
+            } else if (mode === 'one') {
+                bookView.classList.add('view-one');
+                pages.forEach((p, idx) => {
+                    const container = document.createElement('div');
+                    container.className = 'page-container';
+                    const clone = p.element.cloneNode(true);
+                    container.appendChild(clone);
+                    container.style.transform = `scale(${zoom})`;
+                    container.style.transformOrigin = 'top center';
+                    bookView.appendChild(container);
+                });
+            } else if (mode === 'thumbnails') {
+                bookView.classList.add('view-thumbnails');
+                pages.forEach((p, idx) => {
+                    const container = document.createElement('div');
+                    container.className = 'page-container';
+                    const clone = p.element.cloneNode(true);
+                    container.appendChild(clone);
+                    container.style.transform = `scale(${Math.min(zoom, 1.2)})`;
+                    container.dataset.index = idx;
+                    container.addEventListener('click', () => {
+                        state.currentPage = idx;
+                        if (state.isAudioActive) {
+                            // Sincronizar audio
+                            const time = pages[idx].timeStart;
+                            seekAudio(time);
+                        }
+                        render();
+                        updateIndicator();
+                    });
+                    bookView.appendChild(container);
+                });
+            }
+
+            // Actualizar indicador
+            updateIndicator();
+            // Actualizar estado de botones de modo
+            [modeTwoBtn, modeOneBtn, modeThumbBtn].forEach(b => b.classList.remove('active-mode'));
+            if (mode === 'two') modeTwoBtn.classList.add('active-mode');
+            else if (mode === 'one') modeOneBtn.classList.add('active-mode');
+            else if (mode === 'thumbnails') modeThumbBtn.classList.add('active-mode');
+
+            // Ajustar zoom en modo one (scroll) no afecta el contenedor
+            if (mode === 'one') {
+                // ya aplicado a cada página
+            } else if (mode === 'two') {
+                // ya aplicado a cada página
+            } else if (mode === 'thumbnails') {
+                // ya aplicado
+            }
+        }
+
+        function updateIndicator() {
+            const total = TOTAL_PAGES;
+            let current = state.currentPage + 1;
+            // En modo two, mostrar el rango
+            if (state.mode === 'two') {
+                const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth < 768;
+                if (!isPortrait && state._twoStart !== undefined) {
+                    const start = state._twoStart;
+                    const count = state._twoCount || 2;
+                    const end = Math.min(start + count, TOTAL_PAGES);
+                    pageIndicator.textContent = `${start+1} - ${end} / ${total}`;
+                    return;
+                }
+            }
+            pageIndicator.textContent = `${current} / ${total}`;
+        }
+
+        // ============================================================
+        //  NAVEGACIÓN
+        // ============================================================
+        function goToPage(index) {
+            if (index < 0) index = 0;
+            if (index >= TOTAL_PAGES) index = TOTAL_PAGES - 1;
+            state.currentPage = index;
+            // Si audio activo, sincronizar
+            if (state.isAudioActive) {
+                const time = pages[index].timeStart;
+                seekAudio(time);
+            }
+            render();
+            // Si modo two y estamos en vertical, no forzar par
+            // Si estamos en horizontal y modo two, ajustar a par
+            if (state.mode === 'two') {
+                const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth < 768;
+                if (!isPortrait && state.currentPage % 2 !== 0) {
+                    // Si es impar, mover a la anterior para tener par a la izquierda
+                    if (state.currentPage > 0) state.currentPage--;
+                    render();
+                }
+            }
+            updateIndicator();
+        }
+
+        function nextPage() {
+            let inc = 1;
+            if (state.mode === 'two') {
+                const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth < 768;
+                if (!isPortrait) inc = 2;
+            }
+            goToPage(state.currentPage + inc);
+        }
+
+        function prevPage() {
+            let dec = 1;
+            if (state.mode === 'two') {
+                const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth < 768;
+                if (!isPortrait) dec = 2;
+            }
+            goToPage(state.currentPage - dec);
+        }
+
+        // ============================================================
+        //  ZOOM
+        // ============================================================
+        function zoomIn() {
+            state.zoom = Math.min(state.zoom + 0.1, 2.5);
+            render();
+        }
+
+        function zoomOut() {
+            state.zoom = Math.max(state.zoom - 0.1, 0.4);
+            render();
+        }
+
+        // ============================================================
+        //  FULLSCREEN
+        // ============================================================
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+                state.isFullscreen = true;
+                app.classList.add('fullscreen');
+            } else {
+                document.exitFullscreen().catch(() => {});
+                state.isFullscreen = false;
+                app.classList.remove('fullscreen');
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                state.isFullscreen = false;
+                app.classList.remove('fullscreen');
+            }
+        });
+
+        // ============================================================
+        //  AUDIO (Web Audio con cronómetro)
+        // ============================================================
+        function initAudioContext() {
+            if (!state.audioContext) {
+                state.audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                state.gainNode = state.audioContext.createGain();
+                state.gainNode.gain.value = state.volume;
+                state.gainNode.connect(state.audioContext.destination);
+                // Crear oscilador
+                state.oscillator = state.audioContext.createOscillator();
+                state.oscillator.type = 'sine';
+                state.oscillator.frequency.value = 440;
+                state.oscillator.connect(state.gainNode);
+                state.oscillator.start(0);
+                // Loop infinito
+                state.oscillator.onended = () => {
+                    // Reiniciar si se detiene
+                };
+                // No lo iniciamos aún
+            }
+            return state.audioContext;
+        }
+
+        function startAudio() {
+            const ctx = initAudioContext();
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+            if (!state.isPlaying) {
+                state.isPlaying = true;
+                state.lastTimestamp = performance.now() - state.audioTime * 1000;
+                playPauseBtn.textContent = '⏸';
+                // Iniciar el bucle de actualización
+                if (state.animationFrame) cancelAnimationFrame(state.animationFrame);
+                updateAudioLoop();
+            }
+        }
+
+        function pauseAudio() {
+            if (state.audioContext && state.audioContext.state === 'running') {
+                state.audioContext.suspend();
+            }
+            state.isPlaying = false;
+            playPauseBtn.textContent = '▶';
+            if (state.animationFrame) {
+                cancelAnimationFrame(state.animationFrame);
+                state.animationFrame = null;
+            }
+        }
+
+        function togglePlayPause() {
+            if (state.isPlaying) {
+                pauseAudio();
+            } else {
+                startAudio();
+            }
+        }
+
+        function seekAudio(time) {
+            if (time < 0) time = 0;
+            if (time > AUDIO_DURATION) time = AUDIO_DURATION;
+            state.audioTime = time;
+            // Actualizar barra
+            audioProgress.value = (time / AUDIO_DURATION) * 100;
+            audioCurrent.textContent = formatTime(time);
+            // Si está sonando, ajustar el timestamp
+            if (state.isPlaying) {
+                state.lastTimestamp = performance.now() - time * 1000;
+            }
+            // Sincronizar página
+            syncPageFromAudio();
+        }
+
+        function syncPageFromAudio() {
+            const time = state.audioTime;
+            let found = -1;
+            for (let i = 0; i < pages.length; i++) {
+                if (time >= pages[i].timeStart && time < pages[i].timeEnd) {
+                    found = i;
+                    break;
+                }
+            }
+            if (found === -1 && time >= AUDIO_DURATION) {
+                found = pages.length - 1;
+            }
+            if (found !== -1 && found !== state.currentPage) {
+                state.currentPage = found;
+                render();
+                updateIndicator();
+            }
+        }
+
+        function updateAudioLoop() {
+            if (!state.isPlaying) return;
+            const now = performance.now();
+            if (state.lastTimestamp) {
+                const delta = (now - state.lastTimestamp) * state.audioSpeed;
+                state.audioTime = Math.min(state.audioTime + delta / 1000, AUDIO_DURATION);
+                state.lastTimestamp = now;
+                // Actualizar UI
+                audioProgress.value = (state.audioTime / AUDIO_DURATION) * 100;
+                audioCurrent.textContent = formatTime(state.audioTime);
+                // Sincronizar página
+                syncPageFromAudio();
+                // Verificar si terminó
+                if (state.audioTime >= AUDIO_DURATION) {
+                    pauseAudio();
+                    audioCurrent.textContent = formatTime(AUDIO_DURATION);
+                    audioProgress.value = 100;
+                    // Podríamos detener
+                }
+            }
+            state.animationFrame = requestAnimationFrame(updateAudioLoop);
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function rewindAudio() {
+            seekAudio(state.audioTime - 10);
+        }
+
+        function forwardAudio() {
+            seekAudio(state.audioTime + 10);
+        }
+
+        function setSpeed(val) {
+            state.audioSpeed = parseFloat(val);
+            // No afecta al oscilador, solo al cronómetro
+        }
+
+        function setVolume(val) {
+            state.volume = parseFloat(val) / 100;
+            if (state.gainNode) {
+                state.gainNode.gain.value = state.volume;
+            }
+        }
+
+        // Temporizador de apagado
+        let timerTimeout = null;
+
+        function setTimer() {
+            if (timerTimeout) {
+                clearTimeout(timerTimeout);
+                timerTimeout = null;
+                timerStatus.textContent = 'Apagado';
+            }
+            const mins = parseInt(timerMinutes.value) || 15;
+            if (mins <= 0) return;
+            const ms = mins * 60 * 1000;
+            timerStatus.textContent = `${mins} min`;
+            timerTimeout = setTimeout(() => {
+                if (state.isPlaying) {
+                    pauseAudio();
+                }
+                timerStatus.textContent = 'Apagado';
+                timerTimeout = null;
+                // Opcional: notificación
+            }, ms);
+        }
+
+        // ============================================================
+        //  ACTIVAR / DESACTIVAR MODO AUDIO
+        // ============================================================
+        function toggleAudioMode() {
+            state.isAudioActive = !state.isAudioActive;
+            if (state.isAudioActive) {
+                // Guardar modo anterior
+                state.previousMode = state.mode;
+                // Cambiar a modo two? No, forzamos una página + panel
+                state.mode = 'two'; // pero modificaremos el render para mostrar una página
+                // Mostrar panel
+                audioPanel.classList.add('active');
+                audioToggleBtn.classList.add('active');
+                // Iniciar audio si no está
+                if (!state.isPlaying) {
+                    startAudio();
+                }
+                // Ajustar vista: en modo audio, forzar una página (incluso en horizontal)
+                // Lo haremos en el render
+                render();
+                // Sincronizar página con audio
+                syncPageFromAudio();
+                // Ajustar el área del libro para que el panel ocupe espacio
+                // Ya está en flex
+            } else {
+                // Desactivar audio
+                audioPanel.classList.remove('active');
+                audioToggleBtn.classList.remove('active');
+                pauseAudio();
+                // Restaurar modo anterior
+                state.mode = state.previousMode || 'two';
+                render();
+                // Si el audio estaba reproduciendo, pausar
+                if (state.isPlaying) pauseAudio();
+            }
+            // Actualizar indicador
+            updateIndicator();
+        }
+
+        // ============================================================
+        //  MANEJADORES DE EVENTOS
+        // ============================================================
+        prevBtn.addEventListener('click', prevPage);
+        nextBtn.addEventListener('click', nextPage);
+
+        modeTwoBtn.addEventListener('click', () => {
+            if (state.isAudioActive) return;
+            state.mode = 'two';
+            render();
+        });
+        modeOneBtn.addEventListener('click', () => {
+            if (state.isAudioActive) return;
+            state.mode = 'one';
+            render();
+        });
+        modeThumbBtn.addEventListener('click', () => {
+            if (state.isAudioActive) return;
+            state.mode = 'thumbnails';
+            render();
+        });
+
+        zoomInBtn.addEventListener('click', zoomIn);
+        zoomOutBtn.addEventListener('click', zoomOut);
+
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+        audioToggleBtn.addEventListener('click', toggleAudioMode);
+        closeAudioBtn.addEventListener('click', toggleAudioMode);
+
+        // Audio controles
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        rewindBtn.addEventListener('click', rewindAudio);
+        forwardBtn.addEventListener('click', forwardAudio);
+
+        audioProgress.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            const time = (val / 100) * AUDIO_DURATION;
+            seekAudio(time);
+        });
+
+        speedSelect.addEventListener('change', (e) => {
+            setSpeed(e.target.value);
+        });
+
+        volumeRange.addEventListener('input', (e) => {
+            setVolume(e.target.value);
+        });
+
+        setTimerBtn.addEventListener('click', setTimer);
+
+        // Teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextPage();
+            else if (e.key === 'ArrowLeft') prevPage();
+            else if (e.key === ' ') {
+                e.preventDefault();
+                if (state.isAudioActive) togglePlayPause();
+            } else if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+            else if (e.key === 'a' || e.key === 'A') toggleAudioMode();
+        });
+
+        // Orientación cambio
+        window.addEventListener('resize', () => {
+            // Re-renderizar para ajustar número de páginas en modo two
+            if (state.mode === 'two') {
+                render();
+            }
+            // Ajustar panel en móvil
+            if (window.innerWidth < 768 && state.isAudioActive) {
+                audioPanel.classList.add('active');
+            }
+        });
+
+        // ============================================================
+        //  INICIALIZACIÓN
+        // ============================================================
+        // Fijar duración
+        audioDuration.textContent = formatTime(AUDIO_DURATION);
+        audioCurrent.textContent = '0:00';
+        volumeRange.value = 80;
+        timerMinutes.value = 15;
+
+        // Render inicial
+        state.mode = 'two';
+        render();
+
+        // Pre-cargar contexto de audio
+        initAudioContext();
+
+        // ============================================================
+        //  SOBRESCRIBIR RENDER PARA MODO AUDIO (una página + panel)
+        // ============================================================
+        // Modificamos render para que cuando audio esté activo, muestre una página
+        const originalRender = render;
+        render = function() {
+            if (state.isAudioActive) {
+                // Forzar una página en el centro
+                bookView.innerHTML = '';
+                bookView.className = 'view-two';
+                bookView.style.justifyContent = 'center';
+                const current = state.currentPage;
+                const container = document.createElement('div');
+                container.className = 'page-container';
+                container.style.maxWidth = '70%';
+                container.style.height = '90%';
+                const clone = pages[current].element.cloneNode(true);
+                container.appendChild(clone);
+                container.style.transform = `scale(${state.zoom})`;
+                bookView.appendChild(container);
+                updateIndicator();
+                // Actualizar botones modo
+                [modeTwoBtn, modeOneBtn, modeThumbBtn].forEach(b => b.classList.remove('active-mode'));
+                // No resaltar ninguno
+                return;
+            }
+            // Si no audio, usar el render original
+            originalRender();
+        };
+
+        // Override updateIndicator para audio
+        const originalUpdate = updateIndicator;
+        updateIndicator = function() {
+            if (state.isAudioActive) {
+                pageIndicator.textContent = `${state.currentPage+1} / ${TOTAL_PAGES}`;
+                return;
+            }
+            originalUpdate();
+        };
+
+        // Override goToPage para audio
+        const originalGo = goToPage;
+        goToPage = function(index) {
+            if (index < 0) index = 0;
+            if (index >= TOTAL_PAGES) index = TOTAL_PAGES - 1;
+            state.currentPage = index;
+            if (state.isAudioActive) {
+                const time = pages[index].timeStart;
+                seekAudio(time);
+                render();
+                updateIndicator();
+                return;
+            }
+            originalGo(index);
+        };
+
+        // Reasignar next/prev para que usen goToPage
+        // Ya están usando goToPage
+
+        // Finalmente, renderizar con el nuevo render
+        render();
+
+        console.log('📖 Libro Digital cargado. Usa teclado: ← →, Espacio (audio), F (fullscreen), A (audio)');
+    </script>
+</body>
+</html>
