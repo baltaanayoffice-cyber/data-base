@@ -13,32 +13,7 @@ export default {
 
     // Páginas: cada una puede tener imagen (ruta) o texto/color generado
     pages: [
-        { color: '#1e2a3a', text: 'Derecho Administrativo I
-Conjunto de normas, de la rama del derecho público que regula la administración del Estado.
-Estructura del Estado, función de la administración pública, medios de impugnación, procedimientos, trámites dentro de la administración etc.
-Regula la relación entre el Estado y el particular.
-Contratación pública, resoluciones administrativas, multas.
-
--	Cada institución tiene sus propios recursos, y más cuando son autónomas.
-Administración pública: Servicios.
-Miercoles, no habrá clases de Derecho Administrativo. Y tener grupos de no menos de 5 ni más de 10.
-
-Derecho Administrativo.
-Normas que organizan el Estado y regulan las relaciones con el individuo. 
-ADMINISTRACION PUBLICA: Es una acción que busca servir a los habitantes del Estado encaminado buscar el bien común.
-
-Sistema de Derecho Administrativo
-Anglosajón:
-Es el imperante principalmente en Inglaterra y donde no existe un derecho especial que regule las relaciones entre administración publica y los particulares.
-No había una rama que lo regulaba, sino que lo regulaba el derecho civil.
-Sistema Frances:
-El término surge en la revolución francesa. Entre 1789 y 1799. (Derrocamiento de la monarquía.)
-Características del derecho administrativo.
--	Es un derecho joven.
--	No ha sido codificado: No hay una ley específica, excepto la ley de lo contencioso administrativo que es demasiado amplio para regularse en una ley.
--	Derecho subordinado
--	Derecho dinámico.
-' },
+        { color: '#1e2a3a', text: 'Hola' },
         { color: '#2a3a4a', text: '2' },
         { color: '#3a4a5a', text: '3' },
         { color: '#4a5a6a', text: '4' },
